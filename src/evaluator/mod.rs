@@ -20,7 +20,7 @@ pub struct Evaluator<R> {
 impl<R: Requirement> Evaluator<R> {
     pub fn new(source: &str, requirements: HashMap<TerminalId, R>) -> Result<Self, anyhow::Error> {
         let tree = TokenTree::from_str(source)?;
-        let mut bdd = BDD::<char>::new();
+        let mut bdd = BDD::<TerminalId>::new();
         let root_bdd_func = build_bdd(&mut bdd, tree);
         let bdd_terminal_ids = bdd.labels();
 

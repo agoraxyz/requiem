@@ -1,5 +1,6 @@
 use super::Token;
 use crate::gate::Gate;
+use crate::TerminalId;
 use thiserror::Error;
 
 use std::iter::Peekable;
@@ -70,7 +71,12 @@ where
             c if matches!(c, ' ') => Ok(Token::Whitespace),
             '(' => Ok(Token::OpeningParenthesis),
             ')' => Ok(Token::ClosingParenthesis),
-            c if c.is_ascii_lowercase() => Ok(Token::Terminal(c)),
+            c if c.is_ascii_hexdigit() => {
+                self.advance_while(|x| x.is_ascii_hexdigit());
+                let terminal_id = TerminalId::from_str_radix(&self.lexeme, 16)
+                    .map_err(|_| ScanError::InvalidToken(c))?;
+                Ok(Token::Terminal(terminal_id))
+            }
             c if c.is_ascii_uppercase() => {
                 self.advance_while(|x| x.is_ascii_uppercase());
                 let boolean_gate = Gate::from_str(&self.lexeme)?;
@@ -165,7 +171,7 @@ mod test {
     }
 
     #[test]
-    fn scan_variable() {
+    fn scan_terminal() {
         assert_eq!(&Scanner::scan("a").unwrap(), &[Token::Terminal('a')]);
         assert_eq!(
             &Scanner::scan("b c").unwrap(),
