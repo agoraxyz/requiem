@@ -1,6 +1,11 @@
+use boolean_expression::BDD;
+use borsh::{BorshDeserialize, BorshSerialize};
 use criterion::*;
 use rand_core::RngCore;
-use requiem::{Gate, TokenTree};
+use requiem::evaluator::BDDData;
+use requiem::gate::Gate;
+use requiem::token::TokenTree;
+use requiem::TerminalId;
 
 use std::str::FromStr;
 
@@ -35,5 +40,68 @@ fn bench_parsing(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_parsing);
+fn bench_bdd_build(c: &mut Criterion) {
+    let mut group = c.benchmark_group("bdd_build");
+    let expression_10 = generate_expression(10);
+    let expression_20 = generate_expression(20);
+    let expression_30 = generate_expression(30);
+
+    group.bench_function("bench_10", |b| {
+        b.iter(|| BDDData::from_str(&expression_10).unwrap())
+    });
+
+    group.bench_function("bench_20", |b| {
+        b.iter(|| BDDData::from_str(&expression_20).unwrap())
+    });
+
+    group.bench_function("bench_30", |b| {
+        b.iter(|| BDDData::from_str(&expression_30).unwrap())
+    });
+}
+
+fn bench_bdd_serialization(c: &mut Criterion) {
+    let mut group = c.benchmark_group("bdd_serialize");
+    let expression_short = generate_expression(10);
+    let expresssion_medium = generate_expression(20);
+    let expression_long = generate_expression(30);
+
+    let bdd_short = BDDData::from_str(&expression_short).unwrap();
+    let bdd_medium = BDDData::from_str(&expresssion_medium).unwrap();
+    let bdd_long = BDDData::from_str(&expression_long).unwrap();
+
+    let ser_short = bdd_short.bdd.try_to_vec().unwrap();
+    let ser_medium = bdd_medium.bdd.try_to_vec().unwrap();
+    let ser_long = bdd_long.bdd.try_to_vec().unwrap();
+
+    println!("SERIALIZED BDD LEN:");
+    println!("FEW REQUIREMENTS: {}", ser_short.len());
+    println!("MED REQUIREMENTS: {}", ser_medium.len());
+    println!("LOT REQUIREMENTS: {}", ser_long.len());
+
+    group.bench_function("bench_ser_10", |b| {
+        b.iter(|| bdd_short.bdd.try_to_vec().unwrap());
+    });
+    group.bench_function("bench_ser_100", |b| {
+        b.iter(|| bdd_medium.bdd.try_to_vec().unwrap());
+    });
+    group.bench_function("bench_ser_1000", |b| {
+        b.iter(|| bdd_long.bdd.try_to_vec().unwrap());
+    });
+    group.bench_function("bench_de_10", |b| {
+        b.iter(|| BDD::<TerminalId>::try_from_slice(&ser_short).unwrap());
+    });
+    group.bench_function("bench_de_100", |b| {
+        b.iter(|| BDD::<TerminalId>::try_from_slice(&ser_medium).unwrap());
+    });
+    group.bench_function("bench_de_1000", |b| {
+        b.iter(|| BDD::<TerminalId>::try_from_slice(&ser_long).unwrap());
+    });
+}
+
+criterion_group!(
+    benches,
+    bench_parsing,
+    bench_bdd_build,
+    bench_bdd_serialization
+);
 criterion_main!(benches);

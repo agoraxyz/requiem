@@ -10,11 +10,12 @@ opt-level = 3
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
-boolean_expression = { git = "ssh://git@github.com/agoraxyz/boolean_expression.git" }
+boolean_expression = { git = "http://github.com/agoraxyz/boolean_expression.git", features = ["serde-borsh"] }
 futures = "0.3.24"
 thiserror = "1"
 
 [dev-dependencies]
+borsh = "0.9.3"
 criterion = { version = "0.4.0", features = ["async_futures", "async_tokio"]}
 ethers = "0.17.0"
 rand_core = "0.6.4"
