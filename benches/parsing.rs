@@ -46,6 +46,16 @@ fn bench_bdd_build(c: &mut Criterion) {
     let expression_20 = generate_expression(&mut rng, 20);
     let expression_30 = generate_expression(&mut rng, 30);
 
+    println!("GENERATING LARGE BDD...");
+    let expression_large = generate_expression(&mut rng, 35);
+    let now = std::time::Instant::now();
+    let bdd = BDDData::from_str(&expression_large).unwrap();
+    println!(
+        "bdd labels len: {}, elapsed: {} ms",
+        bdd.bdd.labels().len(),
+        now.elapsed().as_millis()
+    );
+
     group.bench_function("bench_10", |b| {
         b.iter(|| BDDData::from_str(&expression_10).unwrap())
     });
