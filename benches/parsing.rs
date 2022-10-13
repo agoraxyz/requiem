@@ -1,7 +1,7 @@
 use boolean_expression::BDD;
 use borsh::{BorshDeserialize, BorshSerialize};
-use criterion::*;
-use rand_core::RngCore;
+use criterion::{criterion_group, criterion_main, Criterion};
+use rand_core::{OsRng, RngCore};
 use requiem::evaluator::BDDData;
 use requiem::gate::Gate;
 use requiem::token::TokenTree;
@@ -9,8 +9,7 @@ use requiem::TerminalId;
 
 use std::str::FromStr;
 
-fn generate_expression(size: usize) -> String {
-    let mut rng = rand_core::OsRng;
+fn generate_expression(rng: &mut OsRng, size: usize) -> String {
     let mut expression = String::from("0");
     for i in 1..size {
         let gate = Gate::from(rng.next_u32() % 5);
@@ -22,10 +21,10 @@ fn generate_expression(size: usize) -> String {
 
 fn bench_parsing(c: &mut Criterion) {
     let mut group = c.benchmark_group("parsing");
-
-    let expression_10 = generate_expression(10);
-    let expression_100 = generate_expression(100);
-    let expression_1000 = generate_expression(1000);
+    let mut rng = OsRng;
+    let expression_10 = generate_expression(&mut rng, 10);
+    let expression_100 = generate_expression(&mut rng, 100);
+    let expression_1000 = generate_expression(&mut rng, 1000);
 
     group.bench_function("bench_10", |b| {
         b.iter(|| TokenTree::from_str(&expression_10).unwrap())
@@ -42,9 +41,10 @@ fn bench_parsing(c: &mut Criterion) {
 
 fn bench_bdd_build(c: &mut Criterion) {
     let mut group = c.benchmark_group("bdd_build");
-    let expression_10 = generate_expression(10);
-    let expression_20 = generate_expression(20);
-    let expression_30 = generate_expression(30);
+    let mut rng = OsRng;
+    let expression_10 = generate_expression(&mut rng, 10);
+    let expression_20 = generate_expression(&mut rng, 20);
+    let expression_30 = generate_expression(&mut rng, 30);
 
     group.bench_function("bench_10", |b| {
         b.iter(|| BDDData::from_str(&expression_10).unwrap())
@@ -61,9 +61,10 @@ fn bench_bdd_build(c: &mut Criterion) {
 
 fn bench_bdd_serialization(c: &mut Criterion) {
     let mut group = c.benchmark_group("bdd_serialize");
-    let expression_short = generate_expression(10);
-    let expresssion_medium = generate_expression(20);
-    let expression_long = generate_expression(30);
+    let mut rng = OsRng;
+    let expression_short = generate_expression(&mut rng, 10);
+    let expresssion_medium = generate_expression(&mut rng, 20);
+    let expression_long = generate_expression(&mut rng, 30);
 
     let bdd_short = BDDData::from_str(&expression_short).unwrap();
     let bdd_medium = BDDData::from_str(&expresssion_medium).unwrap();
